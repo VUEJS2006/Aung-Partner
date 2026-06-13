@@ -614,6 +614,7 @@ export const TransactionsCreate = asyncHandel(async (req, res) => {
       status,
     } = req.body;
 
+    // Validation
     if (
       !shareholder_id ||
       !share_quantity ||
@@ -627,6 +628,7 @@ export const TransactionsCreate = asyncHandel(async (req, res) => {
       });
     }
 
+    // Check shareholder exists
     const [user] = await db.query(
       "SELECT id FROM shareholders WHERE id = ?",
       [shareholder_id]
@@ -639,6 +641,7 @@ export const TransactionsCreate = asyncHandel(async (req, res) => {
       });
     }
 
+    // Calculate amount
     const amount = Number(share_price) * Number(share_quantity);
 
     let total_amount = 0;
@@ -647,8 +650,8 @@ export const TransactionsCreate = asyncHandel(async (req, res) => {
     if (status === "buy") {
       total_amount = amount;
     } else if (status === "dividend") {
-      profit_amount = amount * (Number(percentage) / 100);
       total_amount = amount;
+      profit_amount = amount * (Number(percentage) / 100);
     } else {
       return res.status(400).json({
         success: false,
@@ -656,11 +659,10 @@ export const TransactionsCreate = asyncHandel(async (req, res) => {
       });
     }
 
+    // Insert transaction
     const [data] = await db.query(
       `
-
-      INSERT INTO share_transactions
-      (
+      INSERT INTO share_transactions (
         shareholder_id,
         share_quantity,
         percentage,
@@ -670,8 +672,8 @@ export const TransactionsCreate = asyncHandel(async (req, res) => {
         purchase_date,
         status
       )
-      VALUES(?, ?, ?, ?, ?, ?, ?, ?)`
-      ,
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `,
       [
         shareholder_id,
         share_quantity,
