@@ -658,6 +658,7 @@ export const TransactionsCreate = asyncHandel(async (req, res) => {
 
     const [data] = await db.query(
       `
+
       INSERT INTO share_transactions
       (
         shareholder_id,
@@ -669,8 +670,8 @@ export const TransactionsCreate = asyncHandel(async (req, res) => {
         purchase_date,
         status
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-      `,
+      VALUES(?, ?, ?, ?, ?, ?, ?, ?)`
+      ,
       [
         shareholder_id,
         share_quantity,
