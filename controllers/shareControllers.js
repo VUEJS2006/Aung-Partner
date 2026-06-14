@@ -148,17 +148,18 @@ export const shareDetail = asyncHandel(async (req, res) => {
 
 export const shareUpdate = asyncHandel(async (req, res) => {
     try {
+
         const { id } = req.params;
+
         const {
             share_class,
             share_quantity,
-            total_investment
-
+            price_per_share
         } = req.body;
 
         const qty = Number(share_quantity);
-        const inv = Number(total_investment);
-
+        const price = Number(price_per_share);
+        const buyTotal = qty * price;
 
         const [share] = await db.query(
             "SELECT * FROM shares WHERE id = ?",
@@ -170,16 +171,21 @@ export const shareUpdate = asyncHandel(async (req, res) => {
                 success: false,
                 message: "Share not found"
             });
-        }
-
-        await db.query(
+        } await db.query(
             `UPDATE shares
              SET
                 share_class = ?,
-                share_quantity = ?,
-                total_investment = ?
+                share_quantity = share_quantity + ?,
+                price_per_share = price_per_share + ?,
+                total_investment = total_investment + ?
              WHERE id = ?`,
-            [share_class, qty, inv, id]
+            [
+                share_class,
+                qty,
+                price,
+                buyTotal,
+                id
+            ]
         );
 
         const [updatedData] = await db.query(
@@ -192,8 +198,10 @@ export const shareUpdate = asyncHandel(async (req, res) => {
             message: "Share updated successfully",
             data: updatedData[0]
         });
+
     } catch (error) {
         console.log(error);
+
         return res.status(500).json({
             success: false,
             message: error.message
@@ -320,10 +328,7 @@ export const userShareList = asyncHandel(async (req, res) => {
             ON sh.shareholder_id = s.id
             WHERE sh.shareholder_id = ?
             ORDER BY sh.id DESC
-        `, [shareholder_id]);
-
-
-        if (data.length === 0) {
+        `, [shareholder_id]); if (data.length === 0) {
 
             return res.status(200).json({
                 success: true,

@@ -13,8 +13,8 @@ import { asyncHandel } from "../middleware/asyncMiddleware.js";
 //         } = req.body;
 
 //         if (
-//             !shareholder_id ||
-//             !share_quantity ||
+//             !shareholder_id 
+//             !share_quantity 
 //             !share_price
 //         ) {
 //             return res.status(400).json({
@@ -142,9 +142,7 @@ export const TransactionsList = asyncHandel(async (req, res) => {
             LEFT JOIN shareholders s
             ON st.shareholder_id = s.id
             ORDER BY st.created_at DESC
-        `);
-
-    return res.status(200).json({
+        `); return res.status(200).json({
       success: true,
       count: data.length,
       data,
@@ -229,35 +227,41 @@ export const createLastAmount = asyncHandel(async (req, res) => {
         message: "Shareholder not found",
       });
     }
-
     const [existing] = await db.query(
       "SELECT * FROM last_amounts WHERE shareholder_id = ?",
       [shareholder_id]
     );
 
-    console.log("shareholder_id:", shareholder_id, "last_amount:", last_amount);
+    console.log(
+      "shareholder_id:",
+      shareholder_id,
+      "last_amount:",
+      last_amount
+    );
 
     if (existing.length > 0) {
+      console.log("UPDATE");
 
       await db.query(
-        "UPDATE last_amounts SET last_amount = ? WHERE shareholder_id = ?",
+        "UPDATE last_amounts SET last_amount = last_amount + ? WHERE shareholder_id = ?",
         [last_amount, shareholder_id]
       );
-      console.log("UPDATE (set to absolute value)");
     } else {
       console.log("INSERT");
+
       await db.query(
-        "INSERT INTO last_amounts (shareholder_id, last_amount) VALUES (?,?)",
+        "INSERT INTO last_amounts (shareholder_id,last_amount) VALUES (?,?)",
         [shareholder_id, last_amount]
       );
     }
 
     return res.status(201).json({
       success: true,
-      message: "Last amount created/updated successfully",
+      message: "Last amount created successfully",
     });
   } catch (err) {
     console.log(err);
+
     return res.status(500).json({
       success: false,
       message: err.message,
@@ -513,59 +517,10 @@ export const BuyListByUser = asyncHandel(async (req, res) => {
     });
   }
 });
-export const DividendListByUser = asyncHandel(async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    const [data] = await db.query(
-      `
-      SELECT
-          st.id,
-          st.shareholder_id,
-          s.username,
-          st.share_quantity,
-          st.percentage,
-          st.share_price,
-          st.total_amount,
-          st.status,
-          DATE_FORMAT(
-            st.purchase_date,
-            '%d-%m-%Y'
-          ) AS purchase_date,
-          DATE_FORMAT(
-            st.created_at,
-            '%d-%m-%Y %h:%i %p'
-          ) AS created_at
-      FROM share_transactions st
-      LEFT JOIN shareholders s
-      ON st.shareholder_id = s.id
-      WHERE st.status = 'dividend'
-      AND st.shareholder_id = ?
-      ORDER BY st.created_at DESC
-      `,
-      [id]
-    );
-
-    return res.status(200).json({
-      success: true,
-      count: data.length,
-      data,
-    });
-  } catch (err) {
-    console.log(err);
-
-    return res.status(500).json({
-      success: false,
-      message: err.message,
-    });
-  }
-});
 
 export const TransactionTotal = asyncHandel(async (req, res) => {
   try {
-    const shareholder_id = req.user.id;
-
-    const [rows] = await db.query(
+    const shareholder_id = req.user.id; const [rows] = await db.query(
       `
       SELECT
         COALESCE(
@@ -614,21 +569,13 @@ export const TransactionsCreate = asyncHandel(async (req, res) => {
       status,
     } = req.body;
 
-    // Validation
-    if (
-      !shareholder_id ||
-      !share_quantity ||
-      !share_price ||
-      !purchase_date ||
-      !status
-    ) {
+    if (!shareholder_id || !share_quantity || !share_price || !purchase_date || !status) {
       return res.status(400).json({
         success: false,
         message: "Required fields are missing",
       });
     }
 
-    // Check shareholder exists
     const [user] = await db.query(
       "SELECT id FROM shareholders WHERE id = ?",
       [shareholder_id]
@@ -641,7 +588,6 @@ export const TransactionsCreate = asyncHandel(async (req, res) => {
       });
     }
 
-    // Calculate amount
     const amount = Number(share_price) * Number(share_quantity);
 
     let total_amount = 0;
@@ -650,8 +596,8 @@ export const TransactionsCreate = asyncHandel(async (req, res) => {
     if (status === "buy") {
       total_amount = amount;
     } else if (status === "dividend") {
-      total_amount = amount;
       profit_amount = amount * (Number(percentage) / 100);
+      total_amount = amount;
     } else {
       return res.status(400).json({
         success: false,
@@ -659,10 +605,10 @@ export const TransactionsCreate = asyncHandel(async (req, res) => {
       });
     }
 
-    // Insert transaction
     const [data] = await db.query(
       `
-      INSERT INTO share_transactions (
+      INSERT INTO share_transactions
+      (
         shareholder_id,
         share_quantity,
         percentage,
@@ -690,6 +636,54 @@ export const TransactionsCreate = asyncHandel(async (req, res) => {
       success: true,
       message: "Transaction created successfully",
       insertId: data.insertId,
+    });
+  } catch (err) {
+    console.log(err);
+
+    return res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+});
+
+export const DividendListByUser = asyncHandel(async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const [data] = await db.query(
+      `
+      SELECT
+          st.id,
+          st.shareholder_id,
+          s.username,
+          st.share_quantity,
+          st.percentage,
+          st.share_price,
+          st.total_amount,
+          st.status,
+          DATE_FORMAT(
+            st.purchase_date,
+            '%d-%m-%Y'
+          ) AS purchase_date,
+          DATE_FORMAT(
+            st.created_at,
+            '%d-%m-%Y %h:%i %p'
+          ) AS created_at
+      FROM share_transactions st
+      LEFT JOIN shareholders s
+      ON st.shareholder_id = s.id
+      WHERE st.status = 'dividend'
+      AND st.shareholder_id = ?
+      ORDER BY st.created_at DESC
+      `,
+      [id]
+    );
+
+    return res.status(200).json({
+      success: true,
+      count: data.length,
+      data,
     });
   } catch (err) {
     console.log(err);
