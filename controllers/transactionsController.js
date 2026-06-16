@@ -616,12 +616,8 @@ export const TransactionsCreate = asyncHandel(async (req, res) => {
       status,
     } = req.body;
 
-    if (
-      !shareholder_id ||
-      !share_quantity ||
-      !share_price ||
-      !purchase_date ||
-      !status
+    // ✅ Required fields စစ်ဆေးခြင်း
+    if (!shareholder_id || !share_quantity || !share_price || !purchase_date || !status
     ) {
       return res.status(400).json({
         success: false,
@@ -629,6 +625,7 @@ export const TransactionsCreate = asyncHandel(async (req, res) => {
       });
     }
 
+    // ✅ Shareholder ရှိမရှိစစ်
     const [user] = await db.query(
       "SELECT id FROM shareholders WHERE id = ?",
       [shareholder_id]
@@ -646,22 +643,73 @@ export const TransactionsCreate = asyncHandel(async (req, res) => {
     let total_amount = 0;
     let profit_amount = 0;
 
-    // current last amount
+    // ✅ Current base amount (investment only) ကိုယူ
     const [lastRows] = await db.query(
       "SELECT * FROM last_amounts WHERE shareholder_id = ?",
       [shareholder_id]
     );
 
-    const currentLastAmount =
+    const currentBaseAmount =
       lastRows.length > 0
         ? Number(lastRows[0].last_amount)
         : 0;
 
+    // ✅ Current total dividend profit ကိုယူ (သီးသန့် field ထားမယ်)
+    const [dividendRows] = await db.query(
+      "SELECT * FROM dividend_profits WHERE shareholder_id = ?",
+      [shareholder_id]
+    );
+
+    const currentDividendProfit =
+      dividendRows.length > 0
+        ? Number(dividendRows[0].total_profit)
+        : 0;
+
+    let newBaseAmount = currentBaseAmount;
+    let newDividendProfit = currentDividendProfit;
+    let newLastAmount = currentBaseAmount + currentDividendProfit; // Total Balance (for backward compatibility)
+
     if (status === "buy") {
       total_amount = amount;
+      // ✅ Buy ဆိုရင် base amount ကိုပဲ တိုးမယ်
+      newBaseAmount = currentBaseAmount + total_amount;
+      newLastAmount = newBaseAmount + currentDividendProfit;
 
-      const newLastAmount = currentLastAmount + total_amount;
+      if (lastRows.length > 0) {
+        await db.query(
+          "UPDATE last_amounts SET last_amount = ? WHERE shareholder_id = ?",
+          [newBaseAmount, shareholder_id] // ✅ base amount only
+        );
+      } else {
+        await db.query(
+          "INSERT INTO last_amounts (shareholder_id, last_amount) VALUES (?, ?)",
+          [shareholder_id, newBaseAmount]
+        );
+      }
+    }
+    else if (status === "dividend") {
+      // ✅ Profit ကို current base amount နဲ့ တွက်မယ် (ရင်းနှီးငွေပေါ်မူတည်)
+      // ဒါမှမဟုတ် သင်ရွေးချယ်ထားတဲ့ base shares × price နဲ့ တွက်မယ်
+      profit_amount = amount * (Number(percentage) / 100);
 
+      // Dividend profit ကို သီးသန့် စုဆောင်းမယ်
+      newDividendProfit = currentDividendProfit + profit_amount;
+      newLastAmount = newBaseAmount + newDividendProfit;
+
+      // ✅ Dividend profit ကို သီးသန့် table မှာ သိမ်းမယ်
+      if (dividendRows.length > 0) {
+        await db.query(
+          "UPDATE dividend_profits SET total_profit = ? WHERE shareholder_id = ?",
+          [newDividendProfit, shareholder_id]
+        );
+      } else {
+        await db.query(
+          "INSERT INTO dividend_profits (shareholder_id, total_profit) VALUES (?, ?)",
+          [shareholder_id, newDividendProfit]
+        );
+      }
+
+      // ✅ last_amount ကိုလည်း စုစုပေါင်းအဖြစ် update (အဟောင်းနဲ့ ကိုက်ညီအောင်)
       if (lastRows.length > 0) {
         await db.query(
           "UPDATE last_amounts SET last_amount = ? WHERE shareholder_id = ?",
@@ -673,33 +721,31 @@ export const TransactionsCreate = asyncHandel(async (req, res) => {
           [shareholder_id, newLastAmount]
         );
       }
-    } else if (status === "dividend") {
-      profit_amount =
-        currentLastAmount * (Number(percentage) / 100);
-
-      total_amount = currentLastAmount;
-
-      const newLastAmount =
-        currentLastAmount + profit_amount;
-
-      if (lastRows.length > 0) {
+    }
+    else if (status === "sell") {
+      // ✅ Sell ဆိုရင် base amount ကနေ နုတ်မယ်
+      total_amount = amount;
+      newBaseAmount = currentBaseAmount - total_amount;
+      newLastAmount = newBaseAmount + currentDividendProfit; if (lastRows.length > 0) {
         await db.query(
           "UPDATE last_amounts SET last_amount = ? WHERE shareholder_id = ?",
-          [newLastAmount, shareholder_id]
+          [newBaseAmount, shareholder_id]
         );
       } else {
         await db.query(
           "INSERT INTO last_amounts (shareholder_id, last_amount) VALUES (?, ?)",
-          [shareholder_id, profit_amount]
+          [shareholder_id, newBaseAmount]
         );
       }
-    } else {
+    }
+    else {
       return res.status(400).json({
         success: false,
-        message: "Invalid status. Use 'buy' or 'dividend'",
+        message: "Invalid status. Use 'buy', 'sell', or 'dividend'",
       });
     }
 
+    // ✅ Transaction သိမ်းမယ်
     const [data] = await db.query(
       `
       INSERT INTO share_transactions
@@ -731,6 +777,11 @@ export const TransactionsCreate = asyncHandel(async (req, res) => {
       success: true,
       message: "Transaction created successfully",
       insertId: data.insertId,
+      data: {
+        baseAmount: newBaseAmount,
+        dividendProfit: newDividendProfit,
+        totalBalance: newLastAmount,
+      }
     });
   } catch (err) {
     console.log(err);
