@@ -159,6 +159,7 @@ export const TransactionsList = asyncHandel(async (req, res) => {
   }
 });
 
+
 export const userTransactionsList = asyncHandel(async (req, res) => {
   try {
     const shareholder_id = req.user.id;
@@ -645,11 +646,53 @@ export const TransactionsCreate = asyncHandel(async (req, res) => {
     let total_amount = 0;
     let profit_amount = 0;
 
+    // current last amount
+    const [lastRows] = await db.query(
+      "SELECT * FROM last_amounts WHERE shareholder_id = ?",
+      [shareholder_id]
+    );
+
+    const currentLastAmount =
+      lastRows.length > 0
+        ? Number(lastRows[0].last_amount)
+        : 0;
+
     if (status === "buy") {
       total_amount = amount;
+
+      const newLastAmount = currentLastAmount + total_amount;
+
+      if (lastRows.length > 0) {
+        await db.query(
+          "UPDATE last_amounts SET last_amount = ? WHERE shareholder_id = ?",
+          [newLastAmount, shareholder_id]
+        );
+      } else {
+        await db.query(
+          "INSERT INTO last_amounts (shareholder_id, last_amount) VALUES (?, ?)",
+          [shareholder_id, newLastAmount]
+        );
+      }
     } else if (status === "dividend") {
-      profit_amount = amount * (Number(percentage) / 100);
-      total_amount = amount;
+      profit_amount =
+        currentLastAmount * (Number(percentage) / 100);
+
+      total_amount = currentLastAmount;
+
+      const newLastAmount =
+        currentLastAmount + profit_amount;
+
+      if (lastRows.length > 0) {
+        await db.query(
+          "UPDATE last_amounts SET last_amount = ? WHERE shareholder_id = ?",
+          [newLastAmount, shareholder_id]
+        );
+      } else {
+        await db.query(
+          "INSERT INTO last_amounts (shareholder_id, last_amount) VALUES (?, ?)",
+          [shareholder_id, profit_amount]
+        );
+      }
     } else {
       return res.status(400).json({
         success: false,
