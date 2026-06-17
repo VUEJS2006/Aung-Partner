@@ -160,7 +160,6 @@ export const shareUpdate = asyncHandel(async (req, res) => {
         const inv = Number(total_investment);
         const price = Number(price_per_share || 0);
 
-
         const [share] = await db.query(
             "SELECT * FROM shares WHERE id = ?",
             [id]
@@ -173,7 +172,9 @@ export const shareUpdate = asyncHandel(async (req, res) => {
             });
         }
 
+        const shareholder_id = share[0].shareholder_id;
 
+        // 1. shares table ကို update လုပ်မယ်
         await db.query(
             `UPDATE shares
              SET
@@ -185,6 +186,24 @@ export const shareUpdate = asyncHandel(async (req, res) => {
             [share_class, qty, price, inv, id]
         );
 
+        // 2. last_amounts table ထဲက data ကိုပါ အသစ်ပြင်လိုက်တဲ့ investment တန်ဖိုးအတိုင်း လိုက်ပြင်ပေးမယ်
+        const [lastRows] = await db.query(
+            "SELECT * FROM last_amounts WHERE shareholder_id = ?",
+            [shareholder_id]
+        );
+
+        if (lastRows.length > 0) {
+            await db.query(
+                "UPDATE last_amounts SET last_amount = ? WHERE shareholder_id = ?",
+                [inv, shareholder_id]
+            );
+        } else {
+            await db.query(
+                "INSERT INTO last_amounts (shareholder_id, last_amount) VALUES (?, ?)",
+                [shareholder_id, inv]
+            );
+        }
+
         const [updatedData] = await db.query(
             "SELECT * FROM shares WHERE id = ?",
             [id]
@@ -192,7 +211,7 @@ export const shareUpdate = asyncHandel(async (req, res) => {
 
         return res.status(200).json({
             success: true,
-            message: "Share updated successfully",
+            message: "Share and Last Amount updated successfully",
             data: updatedData[0]
         });
     } catch (error) {

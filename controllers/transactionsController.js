@@ -211,7 +211,7 @@ export const createLastAmount = asyncHandel(async (req, res) => {
   try {
     const { shareholder_id, last_amount } = req.body;
 
-    if (!shareholder_id || !last_amount) {
+    if (!shareholder_id || last_amount === undefined || last_amount === null) {
       return res.status(400).json({
         success: false,
         message: "Required fields are missing",
@@ -229,25 +229,26 @@ export const createLastAmount = asyncHandel(async (req, res) => {
       });
     }
 
+    const targetAmount = Number(last_amount);
+
     const [existing] = await db.query(
       "SELECT * FROM last_amounts WHERE shareholder_id = ?",
       [shareholder_id]
     );
 
-    console.log("shareholder_id:", shareholder_id, "last_amount:", last_amount);
+    console.log("shareholder_id:", shareholder_id, "last_amount:", targetAmount);
 
     if (existing.length > 0) {
-
       await db.query(
         "UPDATE last_amounts SET last_amount = ? WHERE shareholder_id = ?",
-        [last_amount, shareholder_id]
+        [targetAmount, shareholder_id]
       );
       console.log("UPDATE (set to absolute value)");
     } else {
       console.log("INSERT");
       await db.query(
         "INSERT INTO last_amounts (shareholder_id, last_amount) VALUES (?,?)",
-        [shareholder_id, last_amount]
+        [shareholder_id, targetAmount]
       );
     }
 
@@ -644,7 +645,7 @@ export const TransactionsCreate = asyncHandel(async (req, res) => {
     let total_amount = 0;
     let profit_amount = 0;
 
-    // current last amount
+    // လက်ရှိ current last amount ကို ယူမယ်
     const [lastRows] = await db.query(
       "SELECT * FROM last_amounts WHERE shareholder_id = ?",
       [shareholder_id]
@@ -655,49 +656,39 @@ export const TransactionsCreate = asyncHandel(async (req, res) => {
         ? Number(lastRows[0].last_amount)
         : 0;
 
+    let newLastAmount = currentLastAmount;
+
     if (status === "buy") {
       total_amount = amount;
-
-      const newLastAmount = currentLastAmount + total_amount;
-
-      if (lastRows.length > 0) {
-        await db.query(
-          "UPDATE last_amounts SET last_amount = ? WHERE shareholder_id = ?",
-          [newLastAmount, shareholder_id]
-        );
-      } else {
-        await db.query(
-          "INSERT INTO last_amounts (shareholder_id, last_amount) VALUES (?, ?)",
-          [shareholder_id, newLastAmount]
-        );
-      }
+      newLastAmount = currentLastAmount + total_amount; // အဝယ်ဆိုရင် ပေါင်းမယ်
+    } else if (status === "sell") {
+      total_amount = amount;
+      newLastAmount = currentLastAmount - total_amount; // 👈 အရောင်းဆိုရင် နုတ်ပေးရပါမယ်
     } else if (status === "dividend") {
-      profit_amount =
-        currentLastAmount * (Number(percentage) / 100);
-
+      profit_amount = currentLastAmount * (Number(percentage) / 100);
       total_amount = currentLastAmount;
-
-      const newLastAmount =
-        currentLastAmount + profit_amount;
-
-      if (lastRows.length > 0) {
-        await db.query(
-          "UPDATE last_amounts SET last_amount = ? WHERE shareholder_id = ?",
-          [newLastAmount, shareholder_id]
-        );
-      } else {
-        await db.query(
-          "INSERT INTO last_amounts (shareholder_id, last_amount) VALUES (?, ?)",
-          [shareholder_id, profit_amount]
-        );
-      }
+      newLastAmount = currentLastAmount + profit_amount; // အမြတ်ထုတ်ရင် တိုးမယ်
     } else {
       return res.status(400).json({
         success: false,
-        message: "Invalid status. Use 'buy' or 'dividend'",
+        message: "Invalid status. Use 'buy', 'sell' or 'dividend'",
       });
     }
 
+    // last_amounts table ကို Update သို့မဟုတ် Insert လုပ်ခြင်း
+    if (lastRows.length > 0) {
+      await db.query(
+        "UPDATE last_amounts SET last_amount = ? WHERE shareholder_id = ?",
+        [newLastAmount, shareholder_id]
+      );
+    } else {
+      await db.query(
+        "INSERT INTO last_amounts (shareholder_id, last_amount) VALUES (?, ?)",
+        [shareholder_id, newLastAmount]
+      );
+    }
+
+    // share_transactions ထဲကို ဒေတာသွင်းခြင်း
     const [data] = await db.query(
       `
       INSERT INTO share_transactions
@@ -732,7 +723,6 @@ export const TransactionsCreate = asyncHandel(async (req, res) => {
     });
   } catch (err) {
     console.log(err);
-
     return res.status(500).json({
       success: false,
       message: err.message,
