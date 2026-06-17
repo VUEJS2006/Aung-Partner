@@ -161,50 +161,95 @@ export const TransactionsList = asyncHandel(async (req, res) => {
 
 
 export const userTransactionsList = asyncHandel(async (req, res) => {
+
   try {
+
     const shareholder_id = req.user.id;
 
+
+
     const [data] = await db.query(
+
       `
+
       SELECT
+
         id,
+
         shareholder_id,
+
         share_quantity,
+
         percentage,
+
         share_price,
+
         total_amount,
+
         status,
 
+
+
         DATE_FORMAT(
+
           purchase_date,
+
           '%d-%m-%Y'
+
         ) AS purchase_date,
 
+
+
         DATE_FORMAT(
+
           created_at,
+
           '%d-%m-%Y %h:%i %p'
+
         ) AS created_at
 
+
+
       FROM share_transactions
+
       WHERE shareholder_id = ?
+
       ORDER BY created_at DESC
+
       `,
+
       [shareholder_id]
+
     );
 
+
+
     return res.status(200).json({
+
       success: true,
+
       count: data.length,
+
       data,
+
     });
+
   } catch (err) {
+
     console.log(err);
 
+
+
     return res.status(500).json({
+
       success: false,
+
       message: err.message,
+
     });
+
   }
+
 });
 
 
@@ -386,83 +431,156 @@ export const lastAmountList = asyncHandel(async (req, res) => {
 
 });
 
-
 export const userLastAmount = asyncHandel(async (req, res) => {
+
   try {
+
     const shareholder_id = req.user.id;
 
+
+
     const [data] = await db.query(
+
       `
+
             SELECT
+
                 id,
+
                 shareholder_id,
+
                 last_amount,
+
                 DATE_FORMAT(
+
                     created_at,
+
                     '%d-%m-%Y %h:%i %p'
+
                 ) AS created_at
 
+
+
             FROM last_amounts
+
             WHERE shareholder_id = ?
+
             ORDER BY created_at DESC
+
         `,
+
       [shareholder_id],
+
     );
 
+
+
     return res.status(200).json({
+
       success: true,
+
       count: data.length,
+
       data,
+
     });
+
   } catch (err) {
+
     console.log(err);
 
+
+
     return res.status(500).json({
+
       success: false,
+
       message: err.message,
+
     });
+
   }
+
 });
 
 export const userLastAmountUpdate = asyncHandel(async (req, res) => {
+
   try {
+
     const shareholder_id = req.user.id;
+
     const { id } = req.params;
+
     const { last_amount } = req.body;
 
+
+
     const [data] = await db.query(
+
       `SELECT * FROM last_amounts
+
        WHERE id = ? AND shareholder_id = ?`,
+
       [id, shareholder_id]
+
     );
+
+
 
     if (data.length === 0) {
+
       return res.status(404).json({
+
         success: false,
+
         message: "Last Amount not found",
+
       });
+
     }
 
+
+
     await db.query(
+
       `UPDATE last_amounts
+
        SET last_amount = ?
+
        WHERE id = ? AND shareholder_id = ?`,
+
       [last_amount, id, shareholder_id]
+
     );
 
+
+
     return res.status(200).json({
+
       success: true,
+
       message: "Last Amount updated successfully",
+
     });
+
+
 
   } catch (err) {
+
     console.log(err);
 
+
+
     return res.status(500).json({
+
       success: false,
+
       message: err.message,
+
     });
+
   }
+
 });
 
 export const BuyStatus = asyncHandel(async (req, res) => {
