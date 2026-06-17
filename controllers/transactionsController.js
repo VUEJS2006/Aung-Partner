@@ -319,6 +319,72 @@ export const createLastAmount = asyncHandel(async (req, res) => {
   }
 
 });
+
+
+
+export const lastAmountList = asyncHandel(async (req, res) => {
+
+  try {
+
+    const [data] = await db.query(`
+
+            SELECT
+
+                la.id,
+
+                la.shareholder_id,
+
+                s.username,
+
+                la.last_amount,
+
+                DATE_FORMAT(
+
+                    la.created_at,
+
+                    '%d-%m-%Y %h:%i %p'
+
+                ) AS created_at
+
+            FROM last_amounts la
+
+            LEFT JOIN shareholders s
+
+            ON la.shareholder_id = s.id
+
+            ORDER BY la.created_at DESC
+
+        `);
+
+
+
+    return res.status(200).json({
+
+      success: true,
+
+      count: data.length,
+
+      data,
+
+    });
+
+  } catch (err) {
+
+    console.log(err);
+
+
+
+    return res.status(500).json({
+
+      success: false,
+
+      message: err.message,
+
+    });
+
+  }
+
+});
 export const lastAmountList = asyncHandel(async (req, res) => {
   try {
     const [data] = await db.query(`
@@ -928,4 +994,4 @@ export const TransactionsCreate = asyncHandel(async (req, res) => {
 
   }
 
-})
+});
