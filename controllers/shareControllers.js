@@ -147,81 +147,112 @@ export const shareDetail = asyncHandel(async (req, res) => {
 
 
 export const shareUpdate = asyncHandel(async (req, res) => {
+
     try {
+
         const { id } = req.params;
+
         const {
+
             share_class,
+
             share_quantity,
-            price_per_share,
+
             total_investment
+
+
+
         } = req.body;
 
+
+
         const qty = Number(share_quantity);
+
         const inv = Number(total_investment);
-        const price = Number(price_per_share || 0);
+
+
+
+
 
         const [share] = await db.query(
+
             "SELECT * FROM shares WHERE id = ?",
+
             [id]
+
         );
+
+
 
         if (share.length === 0) {
+
             return res.status(404).json({
+
                 success: false,
+
                 message: "Share not found"
+
             });
+
         }
 
-        const shareholder_id = share[0].shareholder_id;
 
-        // 1. shares table ကို update လုပ်မယ်
+
         await db.query(
+
             `UPDATE shares
+
              SET
+
                 share_class = ?,
+
                 share_quantity = ?,
-                price_per_share = ?,
+
                 total_investment = ?
+
              WHERE id = ?`,
-            [share_class, qty, price, inv, id]
+
+            [share_class, qty, inv, id]
+
         );
 
-        // 2. last_amounts table ထဲက data ကိုပါ အသစ်ပြင်လိုက်တဲ့ investment တန်ဖိုးအတိုင်း လိုက်ပြင်ပေးမယ်
-        const [lastRows] = await db.query(
-            "SELECT * FROM last_amounts WHERE shareholder_id = ?",
-            [shareholder_id]
-        );
 
-        if (lastRows.length > 0) {
-            await db.query(
-                "UPDATE last_amounts SET last_amount = ? WHERE shareholder_id = ?",
-                [inv, shareholder_id]
-            );
-        } else {
-            await db.query(
-                "INSERT INTO last_amounts (shareholder_id, last_amount) VALUES (?, ?)",
-                [shareholder_id, inv]
-            );
-        }
 
         const [updatedData] = await db.query(
+
             "SELECT * FROM shares WHERE id = ?",
+
             [id]
+
         );
 
+
+
         return res.status(200).json({
+
             success: true,
-            message: "Share and Last Amount updated successfully",
+
+            message: "Share updated successfully",
+
             data: updatedData[0]
+
         });
+
     } catch (error) {
+
         console.log(error);
+
         return res.status(500).json({
+
             success: false,
+
             message: error.message
+
         });
+
     }
-});
+
+})
 
 // export const buyMoreShare = asyncHandel(async (req, res) => {
 //     try {

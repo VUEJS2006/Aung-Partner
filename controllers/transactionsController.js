@@ -208,64 +208,117 @@ export const userTransactionsList = asyncHandel(async (req, res) => {
 });
 
 
-
 export const createLastAmount = asyncHandel(async (req, res) => {
+
   try {
+
     const { shareholder_id, last_amount } = req.body;
 
+
+
     if (!shareholder_id || !last_amount) {
+
       return res.status(400).json({
+
         success: false,
+
         message: "Required fields are missing",
+
       });
+
     }
+
+
 
     const [user] = await db.query("SELECT id FROM shareholders WHERE id = ?", [
+
       shareholder_id,
+
     ]);
 
+
+
     if (user.length === 0) {
+
       return res.status(404).json({
+
         success: false,
+
         message: "Shareholder not found",
+
       });
+
     }
 
+
+
     const [existing] = await db.query(
+
       "SELECT * FROM last_amounts WHERE shareholder_id = ?",
+
       [shareholder_id]
+
     );
+
+
 
     console.log("shareholder_id:", shareholder_id, "last_amount:", last_amount);
 
+
+
     if (existing.length > 0) {
 
+
+
       await db.query(
+
         "UPDATE last_amounts SET last_amount = ? WHERE shareholder_id = ?",
+
         [last_amount, shareholder_id]
+
       );
+
       console.log("UPDATE (set to absolute value)");
+
     } else {
+
       console.log("INSERT");
+
       await db.query(
+
         "INSERT INTO last_amounts (shareholder_id, last_amount) VALUES (?,?)",
+
         [shareholder_id, last_amount]
+
       );
+
     }
 
-    return res.status(201).json({
-      success: true,
-      message: "Last amount created/updated successfully",
-    });
-  } catch (err) {
-    console.log(err);
-    return res.status(500).json({
-      success: false,
-      message: err.message,
-    });
-  }
-});
 
+
+    return res.status(201).json({
+
+      success: true,
+
+      message: "Last amount created/updated successfully",
+
+    });
+
+  } catch (err) {
+
+    console.log(err);
+
+    return res.status(500).json({
+
+      success: false,
+
+      message: err.message,
+
+    });
+
+  }
+
+});
 export const lastAmountList = asyncHandel(async (req, res) => {
   try {
     const [data] = await db.query(`
@@ -606,138 +659,273 @@ export const TransactionTotal = asyncHandel(async (req, res) => {
 });
 
 export const TransactionsCreate = asyncHandel(async (req, res) => {
+
   try {
+
     const {
+
       shareholder_id,
+
       share_quantity,
+
       percentage = 0,
+
       share_price,
+
       purchase_date,
+
       status,
+
     } = req.body;
 
+
+
     if (
+
       !shareholder_id ||
+
       !share_quantity ||
+
       !share_price ||
+
       !purchase_date ||
+
       !status
+
     ) {
+
       return res.status(400).json({
+
         success: false,
+
         message: "Required fields are missing",
+
       });
+
     }
+
+
 
     const [user] = await db.query(
+
       "SELECT id FROM shareholders WHERE id = ?",
+
       [shareholder_id]
+
     );
 
+
+
     if (user.length === 0) {
+
       return res.status(404).json({
+
         success: false,
+
         message: "User not found",
+
       });
+
     }
+
+
 
     const amount = Number(share_price) * Number(share_quantity);
 
+
+
     let total_amount = 0;
+
     let profit_amount = 0;
 
+
+
     // current last amount
+
     const [lastRows] = await db.query(
+
       "SELECT * FROM last_amounts WHERE shareholder_id = ?",
+
       [shareholder_id]
+
     );
 
+
+
     const currentLastAmount =
+
       lastRows.length > 0
+
         ? Number(lastRows[0].last_amount)
+
         : 0;
 
+
+
     if (status === "buy") {
+
       total_amount = amount;
+
+
 
       const newLastAmount = currentLastAmount + total_amount;
 
+
+
       if (lastRows.length > 0) {
+
         await db.query(
+
           "UPDATE last_amounts SET last_amount = ? WHERE shareholder_id = ?",
+
           [newLastAmount, shareholder_id]
+
         );
+
       } else {
+
         await db.query(
+
           "INSERT INTO last_amounts (shareholder_id, last_amount) VALUES (?, ?)",
+
           [shareholder_id, newLastAmount]
+
         );
+
       }
+
     } else if (status === "dividend") {
+
       profit_amount =
+
         currentLastAmount * (Number(percentage) / 100);
+
+
 
       total_amount = currentLastAmount;
 
+
+
       const newLastAmount =
+
         currentLastAmount + profit_amount;
 
+
+
       if (lastRows.length > 0) {
+
         await db.query(
+
           "UPDATE last_amounts SET last_amount = ? WHERE shareholder_id = ?",
+
           [newLastAmount, shareholder_id]
+
         );
+
       } else {
+
         await db.query(
+
           "INSERT INTO last_amounts (shareholder_id, last_amount) VALUES (?, ?)",
+
           [shareholder_id, profit_amount]
+
         );
+
       }
+
     } else {
+
       return res.status(400).json({
+
         success: false,
+
         message: "Invalid status. Use 'buy' or 'dividend'",
+
       });
+
     }
 
+
+
     const [data] = await db.query(
+
       `
+
       INSERT INTO share_transactions
+
       (
+
         shareholder_id,
+
         share_quantity,
+
         percentage,
+
         share_price,
+
         total_amount,
+
         profit_amount,
+
         purchase_date,
+
         status
+
       )
+
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+
       `,
+
       [
+
         shareholder_id,
+
         share_quantity,
+
         percentage,
+
         share_price,
+
         total_amount,
+
         profit_amount,
+
         purchase_date,
+
         status,
+
       ]
+
     );
 
+
+
     return res.status(201).json({
+
       success: true,
+
       message: "Transaction created successfully",
+
       insertId: data.insertId,
+
     });
+
   } catch (err) {
+
     console.log(err);
 
+
+
     return res.status(500).json({
+
       success: false,
+
       message: err.message,
+
     });
+
   }
-});
+
+})
