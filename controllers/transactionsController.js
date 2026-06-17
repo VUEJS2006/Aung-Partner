@@ -207,8 +207,6 @@ export const userTransactionsList = asyncHandel(async (req, res) => {
   }
 });
 
-
-
 export const createLastAmount = asyncHandel(async (req, res) => {
   try {
     const { shareholder_id, last_amount } = req.body;

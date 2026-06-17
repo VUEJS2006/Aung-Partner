@@ -152,12 +152,13 @@ export const shareUpdate = asyncHandel(async (req, res) => {
         const {
             share_class,
             share_quantity,
+            price_per_share,
             total_investment
-
         } = req.body;
 
         const qty = Number(share_quantity);
         const inv = Number(total_investment);
+        const price = Number(price_per_share || 0);
 
 
         const [share] = await db.query(
@@ -172,14 +173,16 @@ export const shareUpdate = asyncHandel(async (req, res) => {
             });
         }
 
+
         await db.query(
             `UPDATE shares
              SET
                 share_class = ?,
                 share_quantity = ?,
+                price_per_share = ?,
                 total_investment = ?
              WHERE id = ?`,
-            [share_class, qty, inv, id]
+            [share_class, qty, price, inv, id]
         );
 
         const [updatedData] = await db.query(
