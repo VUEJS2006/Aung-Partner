@@ -1129,6 +1129,7 @@ export const LastAmountInsert = asyncHandel(async (req, res) => {
     });
   }
 })
+
 export const getLastAmountByUser = asyncHandel(async (req, res) => {
   try {
 
@@ -1141,8 +1142,8 @@ export const getLastAmountByUser = asyncHandel(async (req, res) => {
     amount,
     revenue,
     DATE_FORMAT(
-      CONVERT_TZ(created_at, '+00:00', '+06:30'),
-      '%Y-%m-%d %H:%i:%s'
+    created_at,
+    '%d-%m-%Y %h:%i %p'
     ) AS created_at
    FROM last_amounts
    WHERE shareholder_id = ?
