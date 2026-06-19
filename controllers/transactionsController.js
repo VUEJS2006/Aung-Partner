@@ -1117,9 +1117,7 @@ export const LastAmountInsert = asyncHandel(async (req, res) => {
     return res.status(201).json({
       message: "Last Amount Create Success",
       success: true,
-      data:{
-        data
-      }
+      data
     })
 
 
