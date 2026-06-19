@@ -1133,7 +1133,23 @@ export const getLastAmountByUser = asyncHandel(async (req, res) => {
   try {
 
     const shareholder_id = req.user.id;
-    const [data] = await db.query("SELECT * FROM last_amounts WHERE shareholder_id = ? ORDER BY id DESC LIMIT 1", [shareholder_id]);
+    const [data] = await db.query(
+      `SELECT
+    id,
+    shareholder_id,
+    quantity,
+    amount,
+    revenue,
+    DATE_FORMAT(
+      CONVERT_TZ(created_at, '+00:00', '+06:30'),
+      '%Y-%m-%d %H:%i:%s'
+    ) AS created_at
+   FROM last_amounts
+   WHERE shareholder_id = ?
+   ORDER BY id DESC
+   LIMIT 1`,
+      [shareholder_id]
+    );
 
     if (data.length === 0) {
       return res.status(404).json({
@@ -1142,7 +1158,7 @@ export const getLastAmountByUser = asyncHandel(async (req, res) => {
       });
     }
     return res.status(200).json({
-      message:"User Amount Success",
+      message: "User Amount Success",
       success: true,
       data: data[0],
     });
