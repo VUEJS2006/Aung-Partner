@@ -1129,3 +1129,37 @@ export const LastAmountInsert = asyncHandel(async (req, res) => {
     });
   }
 })
+export const getLastAmountByUser = asyncHandel(async (req, res) => {
+  try {
+
+    const shareholder_id = req.user.id;
+    const [data] = await db.query("SELECT * FROM last_amounts WHERE shareholder_id = ? ORDER BY id DESC LIMIT 1", [shareholder_id]);
+
+    if (data.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No data found",
+      });
+    }
+    return res.status(200).json({
+      message:"User Amount Success",
+      success: true,
+      data: data[0],
+    });
+
+  } catch (err) {
+
+    console.log(err);
+
+
+
+    return res.status(500).json({
+
+      success: false,
+
+      message: err.message,
+
+    });
+
+  }
+})

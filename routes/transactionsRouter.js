@@ -1,5 +1,5 @@
 import express from "express";
-import { LastAmountInsert,DividendListByUser,TransactionTotal,BuyListByUser,BuyStatus, DividendStatus, TransactionsCreate, TransactionsList, userTransactionsList, createLastAmount, lastAmountList, userLastAmount, userLastAmountUpdate } from "../controllers/transactionsController.js"
+import { getLastAmountByUser,LastAmountInsert,DividendListByUser,TransactionTotal,BuyListByUser,BuyStatus, DividendStatus, TransactionsCreate, TransactionsList, userTransactionsList, createLastAmount, lastAmountList, userLastAmount, userLastAmountUpdate } from "../controllers/transactionsController.js"
 import { validateRegister, isAdmin, isAuth } from "../middleware/authMiddleware.js";
 import { adminPasscode } from "../middleware/passcodeMiddleware.js";
 const router = express.Router();
@@ -18,5 +18,6 @@ router.get("/v1/dividend/status", isAuth, DividendStatus);
 router.get("/list/buy/status/:id",isAuth,isAdmin,BuyListByUser)
 router.get("/list/dividend/status/:id",isAuth,isAdmin,DividendListByUser)
 router.get("/v1/transactions/total",isAuth,TransactionTotal);
-router.post("/insert/last-amount/",isAuth,isAdmin,LastAmountInsert);
+router.post("/insert/last-amount",isAuth,isAdmin,LastAmountInsert);
+router.get("/v1/get/last-amount",isAuth,getLastAmountByUser)
 export default router;
