@@ -1082,3 +1082,50 @@ export const TransactionsCreate = asyncHandel(async (req, res) => {
   }
 
 });
+
+export const LastAmountInsert = asyncHandel(async (req, res) => {
+  try {
+
+    const { shareholder_id, quantity, amount, revenue } = req.body;
+    if (!amount) {
+      res.status(400).json({
+        message: 'Amount Field are required!',
+        success: false
+      })
+    }
+
+    const [user] = await db.query(
+
+      "SELECT id FROM shareholders WHERE id = ?",
+
+      [shareholder_id]
+
+    );
+
+    if (user.length === 0) {
+
+      return res.status(404).json({
+
+        success: false,
+
+        message: "User not found",
+
+      });
+
+    }
+    const [data] = await db.query("INSERT INTO last_amounts (shareholder_id,quantity,amount,revenue) VALUES (?,?,?,?)", [shareholder_id, quantity, amount, revenue]);
+    return res.status(201).json({
+      message: "Last Amount Create Success",
+      success: true,
+      data
+    })
+
+
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+})
