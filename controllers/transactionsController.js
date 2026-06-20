@@ -912,21 +912,20 @@ export const TransactionsCreate = asyncHandel(async (req, res) => {
 
 export const LastAmountInsert = asyncHandel(async (req, res) => {
   try {
-    const { shareholder_id, quantity, amount, revenue } = req.body;
+    const {
+      shareholder_id,
+      quantity = 0,
+      amount = 0,
+      revenue = 0,
+    } = req.body;
 
-    if (
-      shareholder_id === undefined || shareholder_id === null
-      || quantity === undefined || quantity === null
-      || amount === undefined || amount === null
-      || revenue === undefined || revenue === null
-    ) {
+    if (!shareholder_id) {
       return res.status(400).json({
-        message: 'Missing required fields: shareholder_id, quantity, amount, revenue',
-        success: false
+        success: false,
+        message: "shareholder_id is required",
       });
     }
 
-    // ✅ ၂။ User ရှိမရှိ စစ်ဆေးခြင်း
     const [user] = await db.query(
       "SELECT id FROM shareholders WHERE id = ?",
       [shareholder_id]
@@ -939,26 +938,46 @@ export const LastAmountInsert = asyncHandel(async (req, res) => {
       });
     }
 
-    // ✅ ၃။ UPSERT လုပ်ဆောင်ခြင်း (Unique Key ရှိသွားပြီမို့လို့ ပုံမှန်အတိုင်း အလုပ်လုပ်ပါပြီ)
+    console.log("LastAmountInsert =>", {
+      shareholder_id,
+      quantity,
+      amount,
+      revenue,
+    });
+
     const [data] = await db.query(
-      `INSERT INTO last_amounts (shareholder_id, quantity, amount, revenue) 
-       VALUES (?, ?, ?, ?) 
-       ON DUPLICATE KEY UPDATE 
-         quantity = VALUES(quantity), 
-         amount = VALUES(amount), 
-         revenue = VALUES(revenue),
-         created_at = CURRENT_TIMESTAMP`,
-      [shareholder_id, quantity, amount, revenue]
+      `
+      INSERT INTO last_amounts
+      (
+        shareholder_id,
+        quantity,
+        amount,
+        revenue
+      )
+      VALUES (?, ?, ?, ?)
+      ON DUPLICATE KEY UPDATE
+        quantity = VALUES(quantity),
+        amount = VALUES(amount),
+        revenue = VALUES(revenue),
+        created_at = CURRENT_TIMESTAMP
+      `,
+      [
+        shareholder_id,
+        Number(quantity),
+        Number(amount),
+        Number(revenue),
+      ]
     );
 
     return res.status(200).json({
-      message: "Last Amount Upsert Success",
       success: true,
-      data
+      message: "Last Amount Upsert Success",
+      data,
     });
 
   } catch (err) {
-    console.log("❌ LastAmountInsert Error:", err);
+    console.log(err);
+
     return res.status(500).json({
       success: false,
       message: err.message,
