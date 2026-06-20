@@ -912,78 +912,27 @@ export const TransactionsCreate = asyncHandel(async (req, res) => {
 
 export const LastAmountInsert = asyncHandel(async (req, res) => {
   try {
-    const {
-      shareholder_id,
-      quantity = 0,
-      amount = 0,
-      revenue = 0,
-    } = req.body;
-
-    if (!shareholder_id) {
-      return res.status(400).json({
-        success: false,
-        message: "shareholder_id is required",
-      });
+    const { shareholder_id, quantity, amount, revenue } = req.body;
+    if (!amount) {
+      res.status(400).json({
+        message: 'Amount Field are required!',
+        success: false
+      })
     }
-
-    const [user] = await db.query(
-      "SELECT id FROM shareholders WHERE id = ?",
-      [shareholder_id]
-    );
-
+    const [user] = await db.query("SELECT id FROM shareholders WHERE id = ?", [shareholder_id]);
     if (user.length === 0) {
       return res.status(404).json({
-        success: false,
-        message: "User not found",
+        success: false, message: "User not found",
       });
     }
-
-    console.log("LastAmountInsert =>", {
-      shareholder_id,
-      quantity,
-      amount,
-      revenue,
-    });
-
-    const [data] = await db.query(
-      `
-      INSERT INTO last_amounts
-      (
-        shareholder_id,
-        quantity,
-        amount,
-        revenue
-      )
-      VALUES (?, ?, ?, ?)
-      ON DUPLICATE KEY UPDATE
-        quantity = VALUES(quantity),
-        amount = VALUES(amount),
-        revenue = VALUES(revenue),
-        created_at = CURRENT_TIMESTAMP
-      `,
-      [
-        shareholder_id,
-        Number(quantity),
-        Number(amount),
-        Number(revenue),
-      ]
-    );
-
-    return res.status(200).json({
+    const [data] = await db.query("INSERT INTO last_amounts (shareholder_id,quantity,amount,revenue) VALUES (?,?,?,?)", [shareholder_id, quantity, amount, revenue]);
+    return res.status(201).json({
+      message: "Last Amount Create Success",
       success: true,
-      message: "Last Amount Upsert Success",
-      data,
-    });
-
-  } catch (err) {
-    console.log(err);
-
-    return res.status(500).json({
-      success: false,
-      message: err.message,
-    });
-  }
-});
+      data
+    })
+  } catch (err) { console.log(err); return res.status(500).json({ success: false, message: err.message, }); }
+})
 
 export const getLastAmountByUser = asyncHandel(async (req, res) => {
   try {
