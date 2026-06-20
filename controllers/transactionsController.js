@@ -915,7 +915,7 @@ export const LastAmountInsert = asyncHandel(async (req, res) => {
     const { shareholder_id, quantity, amount, revenue } = req.body;
 
     // ✅ ၁။ Required Field အားလုံး စစ်ပြီး return ထည့်ပါ
-    if (!shareholder_id  !quantity  amount === undefined  amount === null  revenue === undefined || revenue === null) {
+    if (!shareholder_id || !quantity || !amount === undefined || !amount === null || !revenue === undefined || revenue === null) {
       return res.status(400).json({
         message: 'Missing required fields: shareholder_id, quantity, amount, revenue',
         success: false
