@@ -914,15 +914,20 @@ export const LastAmountInsert = asyncHandel(async (req, res) => {
   try {
     const { shareholder_id, quantity, amount, revenue } = req.body;
 
-    // ✅ ၁။ Required Field အားလုံး စစ်ပြီး return ထည့်ပါ
-    if (!shareholder_id || !quantity || !amount === undefined || !amount === null || !revenue === undefined || revenue === null) {
+    // ✅ ၁။ ခိုင်မာစိတ်ချရတဲ့ Validation စစ်ဆေးမှု ပုံစံသို့ ပြောင်းလဲခြင်း
+    if (
+      shareholder_id === undefined || shareholder_id === null ||
+      quantity === undefined || quantity === null ||
+      amount === undefined || amount === null ||
+      revenue === undefined || revenue === null
+    ) {
       return res.status(400).json({
         message: 'Missing required fields: shareholder_id, quantity, amount, revenue',
         success: false
       });
     }
 
-    // ✅ ၂။ User ရှိမရှိ စစ်ပါ
+    // ✅ ၂။ User ရှိမရှိ စစ်ဆေးခြင်း
     const [user] = await db.query(
       "SELECT id FROM shareholders WHERE id = ?",
       [shareholder_id]
@@ -935,7 +940,7 @@ export const LastAmountInsert = asyncHandel(async (req, res) => {
       });
     }
 
-    // ✅ ၃။ UPSERT လုပ်ပါ (ရှိရင် Update, မရှိရင် Insert)
+    // ✅ ၃။ UPSERT လုပ်ဆောင်ခြင်း (Unique Key ရှိသွားပြီမို့လို့ ပုံမှန်အတိုင်း အလုပ်လုပ်ပါပြီ)
     const [data] = await db.query(
       `INSERT INTO last_amounts (shareholder_id, quantity, amount, revenue) 
        VALUES (?, ?, ?, ?) 
@@ -947,7 +952,7 @@ export const LastAmountInsert = asyncHandel(async (req, res) => {
       [shareholder_id, quantity, amount, revenue]
     );
 
-    return res.status(201).json({
+    return res.status(200).json({
       message: "Last Amount Upsert Success",
       success: true,
       data
