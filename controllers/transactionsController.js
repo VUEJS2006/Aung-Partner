@@ -912,50 +912,55 @@ export const TransactionsCreate = asyncHandel(async (req, res) => {
 
 export const LastAmountInsert = asyncHandel(async (req, res) => {
   try {
-
     const { shareholder_id, quantity, amount, revenue } = req.body;
-    if (!amount) {
-      res.status(400).json({
-        message: 'Amount Field are required!',
+
+    // ✅ ၁။ Required Field အားလုံး စစ်ပြီး return ထည့်ပါ
+    if (!shareholder_id  !quantity  amount === undefined  amount === null  revenue === undefined || revenue === null) {
+      return res.status(400).json({
+        message: 'Missing required fields: shareholder_id, quantity, amount, revenue',
         success: false
-      })
+      });
     }
 
+    // ✅ ၂။ User ရှိမရှိ စစ်ပါ
     const [user] = await db.query(
-
       "SELECT id FROM shareholders WHERE id = ?",
-
       [shareholder_id]
-
     );
 
     if (user.length === 0) {
-
       return res.status(404).json({
-
         success: false,
-
         message: "User not found",
-
       });
-
     }
-    const [data] = await db.query("INSERT INTO last_amounts (shareholder_id,quantity,amount,revenue) VALUES (?,?,?,?)", [shareholder_id, quantity, amount, revenue]);
+
+    // ✅ ၃။ UPSERT လုပ်ပါ (ရှိရင် Update, မရှိရင် Insert)
+    const [data] = await db.query(
+      `INSERT INTO last_amounts (shareholder_id, quantity, amount, revenue) 
+       VALUES (?, ?, ?, ?) 
+       ON DUPLICATE KEY UPDATE 
+         quantity = VALUES(quantity), 
+         amount = VALUES(amount), 
+         revenue = VALUES(revenue),
+         created_at = CURRENT_TIMESTAMP`,
+      [shareholder_id, quantity, amount, revenue]
+    );
+
     return res.status(201).json({
-      message: "Last Amount Create Success",
+      message: "Last Amount Upsert Success",
       success: true,
       data
-    })
-
+    });
 
   } catch (err) {
-    console.log(err);
+    console.log("❌ LastAmountInsert Error:", err);
     return res.status(500).json({
       success: false,
       message: err.message,
     });
   }
-})
+});
 
 export const getLastAmountByUser = asyncHandel(async (req, res) => {
   try {
