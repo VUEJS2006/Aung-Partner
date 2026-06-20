@@ -914,12 +914,11 @@ export const LastAmountInsert = asyncHandel(async (req, res) => {
   try {
     const { shareholder_id, quantity, amount, revenue } = req.body;
 
-    // ✅ ၁။ ခိုင်မာစိတ်ချရတဲ့ Validation စစ်ဆေးမှု ပုံစံသို့ ပြောင်းလဲခြင်း
     if (
-      shareholder_id === undefined || shareholder_id === null ||
-      quantity === undefined || quantity === null ||
-      amount === undefined || amount === null ||
-      revenue === undefined || revenue === null
+      shareholder_id === undefined || shareholder_id === null
+      || quantity === undefined || quantity === null
+      || amount === undefined || amount === null
+      || revenue === undefined || revenue === null
     ) {
       return res.status(400).json({
         message: 'Missing required fields: shareholder_id, quantity, amount, revenue',
