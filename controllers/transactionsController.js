@@ -253,335 +253,335 @@ export const userTransactionsList = asyncHandel(async (req, res) => {
 });
 
 
-export const createLastAmount = asyncHandel(async (req, res) => {
+// export const createLastAmount = asyncHandel(async (req, res) => {
 
-  try {
+//   try {
 
-    const { shareholder_id, last_amount } = req.body;
+//     const { shareholder_id, last_amount } = req.body;
 
 
 
-    if (!shareholder_id || !last_amount) {
+//     if (!shareholder_id || !last_amount) {
 
-      return res.status(400).json({
+//       return res.status(400).json({
 
-        success: false,
+//         success: false,
 
-        message: "Required fields are missing",
+//         message: "Required fields are missing",
 
-      });
+//       });
 
-    }
+//     }
 
 
 
-    const [user] = await db.query("SELECT id FROM shareholders WHERE id = ?", [
+//     const [user] = await db.query("SELECT id FROM shareholders WHERE id = ?", [
 
-      shareholder_id,
+//       shareholder_id,
 
-    ]);
+//     ]);
 
 
 
-    if (user.length === 0) {
+//     if (user.length === 0) {
 
-      return res.status(404).json({
+//       return res.status(404).json({
 
-        success: false,
+//         success: false,
 
-        message: "Shareholder not found",
+//         message: "Shareholder not found",
 
-      });
+//       });
 
-    }
+//     }
 
 
 
-    const [existing] = await db.query(
+//     const [existing] = await db.query(
 
-      "SELECT * FROM last_amounts WHERE shareholder_id = ?",
+//       "SELECT * FROM last_amounts WHERE shareholder_id = ?",
 
-      [shareholder_id]
+//       [shareholder_id]
 
-    );
+//     );
 
 
 
-    console.log("shareholder_id:", shareholder_id, "last_amount:", last_amount);
+//     console.log("shareholder_id:", shareholder_id, "last_amount:", last_amount);
 
 
 
-    if (existing.length > 0) {
+//     if (existing.length > 0) {
 
 
 
-      await db.query(
+//       await db.query(
 
-        "UPDATE last_amounts SET last_amount = ? WHERE shareholder_id = ?",
+//         "UPDATE last_amounts SET last_amount = ? WHERE shareholder_id = ?",
 
-        [last_amount, shareholder_id]
+//         [last_amount, shareholder_id]
 
-      );
+//       );
 
-      console.log("UPDATE (set to absolute value)");
+//       console.log("UPDATE (set to absolute value)");
 
-    } else {
+//     } else {
 
-      console.log("INSERT");
+//       console.log("INSERT");
 
-      await db.query(
+//       await db.query(
 
-        "INSERT INTO last_amounts (shareholder_id, last_amount) VALUES (?,?)",
+//         "INSERT INTO last_amounts (shareholder_id, last_amount) VALUES (?,?)",
 
-        [shareholder_id, last_amount]
+//         [shareholder_id, last_amount]
 
-      );
+//       );
 
-    }
+//     }
 
 
 
-    return res.status(201).json({
+//     return res.status(201).json({
 
-      success: true,
+//       success: true,
 
-      message: "Last amount created/updated successfully",
+//       message: "Last amount created/updated successfully",
 
-    });
+//     });
 
-  } catch (err) {
+//   } catch (err) {
 
-    console.log(err);
+//     console.log(err);
 
-    return res.status(500).json({
+//     return res.status(500).json({
 
-      success: false,
+//       success: false,
 
-      message: err.message,
+//       message: err.message,
 
-    });
+//     });
 
-  }
+//   }
 
-});
+// });
 
 
 
-export const lastAmountList = asyncHandel(async (req, res) => {
+// export const lastAmountList = asyncHandel(async (req, res) => {
 
-  try {
+//   try {
 
-    const [data] = await db.query(`
+//     const [data] = await db.query(`
 
-            SELECT
+//             SELECT
 
-                la.id,
+//                 la.id,
 
-                la.shareholder_id,
+//                 la.shareholder_id,
 
-                s.username,
+//                 s.username,
 
-                la.last_amount,
+//                 la.last_amount,
 
-                DATE_FORMAT(
+//                 DATE_FORMAT(
 
-                    la.created_at,
+//                     la.created_at,
 
-                    '%d-%m-%Y %h:%i %p'
+//                     '%d-%m-%Y %h:%i %p'
 
-                ) AS created_at
+//                 ) AS created_at
 
-            FROM last_amounts la
+//             FROM last_amounts la
 
-            LEFT JOIN shareholders s
+//             LEFT JOIN shareholders s
 
-            ON la.shareholder_id = s.id
+//             ON la.shareholder_id = s.id
 
-            ORDER BY la.created_at DESC
+//             ORDER BY la.created_at DESC
 
-        `);
+//         `);
 
 
 
-    return res.status(200).json({
+//     return res.status(200).json({
 
-      success: true,
+//       success: true,
 
-      count: data.length,
+//       count: data.length,
 
-      data,
+//       data,
 
-    });
+//     });
 
-  } catch (err) {
+//   } catch (err) {
 
-    console.log(err);
+//     console.log(err);
 
 
 
-    return res.status(500).json({
+//     return res.status(500).json({
 
-      success: false,
+//       success: false,
 
-      message: err.message,
+//       message: err.message,
 
-    });
+//     });
 
-  }
+//   }
 
-});
+// });
 
-export const userLastAmount = asyncHandel(async (req, res) => {
+// export const userLastAmount = asyncHandel(async (req, res) => {
 
-  try {
+//   try {
 
-    const shareholder_id = req.user.id;
+//     const shareholder_id = req.user.id;
 
 
 
-    const [data] = await db.query(
+//     const [data] = await db.query(
 
-      `
+//       `
 
-            SELECT
+//             SELECT
 
-                id,
+//                 id,
 
-                shareholder_id,
+//                 shareholder_id,
 
-                last_amount,
+//                 last_amount,
 
-                DATE_FORMAT(
+//                 DATE_FORMAT(
 
-                    created_at,
+//                     created_at,
 
-                    '%d-%m-%Y %h:%i %p'
+//                     '%d-%m-%Y %h:%i %p'
 
-                ) AS created_at
+//                 ) AS created_at
 
 
 
-            FROM last_amounts
+//             FROM last_amounts
 
-            WHERE shareholder_id = ?
+//             WHERE shareholder_id = ?
 
-            ORDER BY created_at DESC
+//             ORDER BY created_at DESC
 
-        `,
+//         `,
 
-      [shareholder_id],
+//       [shareholder_id],
 
-    );
+//     );
 
 
 
-    return res.status(200).json({
+//     return res.status(200).json({
 
-      success: true,
+//       success: true,
 
-      count: data.length,
+//       count: data.length,
 
-      data,
+//       data,
 
-    });
+//     });
 
-  } catch (err) {
+//   } catch (err) {
 
-    console.log(err);
+//     console.log(err);
 
 
 
-    return res.status(500).json({
+//     return res.status(500).json({
 
-      success: false,
+//       success: false,
 
-      message: err.message,
+//       message: err.message,
 
-    });
+//     });
 
-  }
+//   }
 
-});
+// });
 
-export const userLastAmountUpdate = asyncHandel(async (req, res) => {
+// export const userLastAmountUpdate = asyncHandel(async (req, res) => {
 
-  try {
+//   try {
 
-    const shareholder_id = req.user.id;
+//     const shareholder_id = req.user.id;
 
-    const { id } = req.params;
+//     const { id } = req.params;
 
-    const { last_amount } = req.body;
+//     const { last_amount } = req.body;
 
 
 
-    const [data] = await db.query(
+//     const [data] = await db.query(
 
-      `SELECT * FROM last_amounts
+//       `SELECT * FROM last_amounts
 
-       WHERE id = ? AND shareholder_id = ?`,
+//        WHERE id = ? AND shareholder_id = ?`,
 
-      [id, shareholder_id]
+//       [id, shareholder_id]
 
-    );
+//     );
 
 
 
-    if (data.length === 0) {
+//     if (data.length === 0) {
 
-      return res.status(404).json({
+//       return res.status(404).json({
 
-        success: false,
+//         success: false,
 
-        message: "Last Amount not found",
+//         message: "Last Amount not found",
 
-      });
+//       });
 
-    }
+//     }
 
 
 
-    await db.query(
+//     await db.query(
 
-      `UPDATE last_amounts
+//       `UPDATE last_amounts
 
-       SET last_amount = ?
+//        SET last_amount = ?
 
-       WHERE id = ? AND shareholder_id = ?`,
+//        WHERE id = ? AND shareholder_id = ?`,
 
-      [last_amount, id, shareholder_id]
+//       [last_amount, id, shareholder_id]
 
-    );
+//     );
 
 
 
-    return res.status(200).json({
+//     return res.status(200).json({
 
-      success: true,
+//       success: true,
 
-      message: "Last Amount updated successfully",
+//       message: "Last Amount updated successfully",
 
-    });
+//     });
 
 
 
-  } catch (err) {
+//   } catch (err) {
 
-    console.log(err);
+//     console.log(err);
 
 
 
-    return res.status(500).json({
+//     return res.status(500).json({
 
-      success: false,
+//       success: false,
 
-      message: err.message,
+//       message: err.message,
 
-    });
+//     });
 
-  }
+//   }
 
-});
+// });
 
 export const BuyStatus = asyncHandel(async (req, res) => {
   try {
