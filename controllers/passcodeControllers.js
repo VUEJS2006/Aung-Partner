@@ -61,7 +61,7 @@ export const ChangePasscode = asyncHandel(async (req, res) => {
         }
         const [data] = await db.query("UPDATE passcodes SET passcode=? WHERE id = ?", [passcode,id]);
         return res.status(200).json({
-            success: success,
+            success: true,
             message: "Change Passcode Success!",
            
         });
