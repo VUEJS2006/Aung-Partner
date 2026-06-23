@@ -600,3 +600,29 @@ export const AdminProfileUpdate = asyncHandel(async (req, res) => {
         })
     }
 })
+
+export const AdminChangePassword = asyncHandel(async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { password, confirmPassword } = req.body;
+        if (password !== confirmPassword) {
+            return res.status(401).json({
+                message: "Password is Not Same!",
+                success: false
+            })
+        }
+        const hashedPassword = await bcrypt.hash(password, 12);
+        const [data] = await db.query("UPDATE shareholders SET password = ? , WHERE id = ?", [hashedPassword, id]);
+        return res.status(401).json({
+            message: "Password Change Success!",
+            success: true
+        })
+
+    } catch (err) {
+        console.log(err)
+        res.status(500).json({
+            message: err.message,
+            success: false
+        })
+    }
+})

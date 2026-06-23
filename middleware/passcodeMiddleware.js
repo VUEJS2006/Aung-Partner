@@ -1,34 +1,28 @@
-import "dotenv/config"
-export const adminPasscode = (req, res, next) => {
-    try {
+import db from "../config/db.js";
+import { asyncHandel } from "./asyncMiddleware.js";
 
-        const { passcode } = req.body;
-        if (passcode === undefined) {
-            return res.status(400).json({
-                message: "Passcode Required!",
-                success: false
-            })
-        }
-        if (typeof passcode !== "number") {
-            return res.status(400).json({
-                success: false,
-                message: "Passcode must be number!"
-            });
-        }
-        if (passcode !== Number(process.env.PASS_CODE)) {
-            return res.status(401).json({
-                success: false,
-                message: "Invalid Passcode!"
-            });
-        }
-
-        next()
-
-
-    } catch (err) {
-        res.status(500).json({
-            message: err.message,
-            success: false
+export const verifyPasscode = asyncHandel(async (req, res, next) => {
+    const passcode = req.headers['x-passcode'];
+    if (!passcode) {
+        return res.status(401).json({
+            success: false,
+            message: "Passcode is required",
         });
     }
-}
+    const [rows] = await db.query(
+        "SELECT passcode FROM passcodes ORDER BY id DESC LIMIT 1"
+    );
+    if (rows.length === 0) {
+        return res.status(404).json({
+            success: false,
+            message: "Passcode not found",
+        });
+    }
+    if (rows[0].passcode !== passcode) {
+        return res.status(401).json({
+            success: false,
+            message: "Invalid passcode",
+        });
+    }
+    next();
+})
