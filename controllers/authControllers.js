@@ -619,7 +619,7 @@ export const AdminChangePassword = asyncHandel(async (req, res) => {
         }
         const hashedPassword = await bcrypt.hash(password, 12);
         const [data] = await db.query("UPDATE shareholders SET password = ?  WHERE id = ?", [hashedPassword, id]);
-        return res.status(401).json({
+        return res.status(201).json({
             message: "Password Change Success!",
             success: true
         })
