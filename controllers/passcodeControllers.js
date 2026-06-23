@@ -59,7 +59,7 @@ export const ChangePasscode = asyncHandel(async (req, res) => {
                 message: 'Passcode is Not Same!',
             });
         }
-        const [data] = await db.query("UPDATE passcodes SET passcode=?,WHERE id = ?", [id]);
+        const [data] = await db.query("UPDATE passcodes SET passcode=? WHERE id = ?", [passcode,id]);
         return res.status(200).json({
             success: success,
             message: "Change Passcode Success!",
