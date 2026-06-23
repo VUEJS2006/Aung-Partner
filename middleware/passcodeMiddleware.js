@@ -18,7 +18,7 @@ export const verifyPasscode = asyncHandel(async (req, res, next) => {
             message: "Passcode not found",
         });
     }
-    if (rows[0].passcode !== passcode) {
+    if (rows[0].passcode !== Number(passcode)) {
         return res.status(401).json({
             success: false,
             message: "Invalid passcode",
