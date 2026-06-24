@@ -1,5 +1,5 @@
 import express from "express";
-import { AdminChangePassword, AdminProfileUpdate, verifyOTP, AccountDelete, ChangePassword, registerList, register, login, logout, pendingUser, approvedUser, cancelledUser, pendingCheckUser, getProfile, updateProfile } from "../controllers/authControllers.js"
+import { UserDelete, AdminChangePassword, AdminProfileUpdate, verifyOTP, AccountDelete, ChangePassword, registerList, register, login, logout, pendingUser, approvedUser, cancelledUser, pendingCheckUser, getProfile, updateProfile } from "../controllers/authControllers.js"
 import { validateRegister, isAdmin, isAuth } from "../middleware/authMiddleware.js";
 import { upload } from "../middleware/upload.js";
 import { verifyPasscode } from "../middleware/passcodeMiddleware.js";
@@ -20,4 +20,5 @@ router.put('/pending/user/:id', isAuth, isAdmin, verifyPasscode, pendingUser)
 router.put('/change/password/:id', isAuth, ChangePassword);
 router.delete('/account/delete/:id', isAuth, AccountDelete);
 router.put('/admin/change/password/:id', isAuth, isAdmin, AdminChangePassword);
+router.delete('/admin/account/delete/:id', isAuth, isAdmin, UserDelete);
 export default router;
