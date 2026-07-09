@@ -40,8 +40,8 @@ export const listWithDraw = asyncHandel(async (req, res) => {
             SELECT
              w.id,
              w.shareholder_id,
-             w.amount
-             w.status
+             w.amount,
+             w.status,
              DATE_FORMAT(w.created_at, '%d-%m-%Y %h:%i %p') AS created_at,
              s.name
 
