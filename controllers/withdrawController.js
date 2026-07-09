@@ -43,7 +43,7 @@ export const listWithDraw = asyncHandel(async (req, res) => {
              w.amount,
              w.status,
              DATE_FORMAT(w.created_at, '%d-%m-%Y %h:%i %p') AS created_at,
-             s.name
+             s.username
 
              FROM profit_withdrawals w LEFT JOIN shareholders s ON w.shareholder_id = s.id
              WHERE w.status = 'pending'
