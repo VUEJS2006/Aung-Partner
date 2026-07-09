@@ -46,7 +46,6 @@ export const listWithDraw = asyncHandel(async (req, res) => {
              s.username
 
              FROM profit_withdrawals w LEFT JOIN shareholders s ON w.shareholder_id = s.id
-             WHERE w.status = 'pending'
              ORDER BY w.id DESC
             `)
         return res.status(200).json({
