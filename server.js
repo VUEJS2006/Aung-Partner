@@ -10,6 +10,7 @@ import shareRouter from "./routes/shareRouter.js";
 import transactionRouter from "./routes/transactionsRouter.js";
 import conditionRouter from "./routes/conditionRouter.js";
 import passcodeRouter from "./routes/passcodeRouters.js"
+import withdrawRouter from "./routes/withdrawRouter.js"
 const app = express();
 
 try {
@@ -32,6 +33,7 @@ app.use('/api', shareRouter);
 app.use('/api', transactionRouter);
 app.use('/api', conditionRouter);
 app.use('/api', passcodeRouter)
+app.use('/api', withdrawRouter)
 app.use('/uploads', express.static('image/uploads'));
 
 app.get('/', (req, res) => {

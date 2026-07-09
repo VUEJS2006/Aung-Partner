@@ -3,7 +3,8 @@ import "dotenv/config"
 
 export const isAuth = (req, res, next) => {
     try {
-        const token = req.cookies.access_token  || req.headers.authorization?.split(" ")[1];
+        const token = req.cookies.access_token || req.headers.authorization?.split(" ")[1];
+        console.log(token)
         if (!token) return res.status(401).json({ message: "Token Not Found", success: false });
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET);

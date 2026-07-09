@@ -973,7 +973,6 @@ export const getLastAmountByUser = asyncHandel(async (req, res) => {
     console.log(err);
 
 
-
     return res.status(500).json({
 
       success: false,
@@ -984,3 +983,4 @@ export const getLastAmountByUser = asyncHandel(async (req, res) => {
 
   }
 })
+
