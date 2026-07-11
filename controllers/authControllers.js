@@ -35,7 +35,7 @@ export const register = asyncHandel(async (req, res) => {
 
 
         await db.query("DELETE FROM otp_codes WHERE email=?", [email]);
-        await db.query("INSERT INTO otp_codes (email,otp,expires_at) VALUES  (?, ?, DATE_ADD(NOW(), INTERVAL 5 MINUTE))", [email, otp]);
+        await db.query("INSERT INTO otp_codes (email,otp,expires_at) VALUES  (?, ?, DATE_ADD(NOW(), INTERVAL 10 MINUTE))", [email, otp]);
         await sendOTP(email, otp);
 
         const tempToken = jwt.sign(
@@ -51,7 +51,7 @@ export const register = asyncHandel(async (req, res) => {
                 birthday
             },
             process.env.JWT_SECRET,
-            { expiresIn: "10m" }
+            { expiresIn: "15m" }
         );
 
 
