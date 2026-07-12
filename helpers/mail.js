@@ -46,7 +46,7 @@ export const sendOTP = async (email, otp) => {
                     </div>
 
                     <p style="color:#888; font-size:12px;">
-                        Expires in 5 minutes
+                        Expires in 10 minutes
                     </p>
                 </div>
 
