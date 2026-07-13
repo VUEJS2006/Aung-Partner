@@ -10,7 +10,7 @@ router.post('/verify/otp', verifyOTP);
 router.post('/login', login);
 router.get('/register/list', registerList);
 router.post('/logout', logout);
-router.get('/profile/user/:id', isAuth, getProfile);
+router.get('/profile/user', isAuth, getProfile);
 router.put('/update/profile', isAuth, upload.single("image"), updateProfile);
 router.put('/admin/update/profile/:id', isAuth, isAdmin, upload.single("image"), AdminProfileUpdate);
 router.get('/pending/check/user', isAuth, isAdmin, pendingCheckUser);
