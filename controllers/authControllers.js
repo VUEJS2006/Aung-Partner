@@ -356,7 +356,7 @@ export const getProfile = asyncHandel(async (req, res) => {
 
         const userID = req.user.id;
 
-        const [checkUser] = await db.query("SELECT  id, username, email, phone, address, township, region,nrc FROM shareholders WHERE id = ?", [userID]);
+        const [checkUser] = await db.query("SELECT  id, username, email, phone, address, township, region,nrc,image FROM shareholders WHERE id = ?", [userID]);
         res.status(200).json({
             success: true,
             data: checkUser[0]
