@@ -354,7 +354,7 @@ export const pendingUser = asyncHandel(async (req, res) => {
 export const getProfile = asyncHandel(async (req, res) => {
     try {
 
-        const userID = req.params.id;
+        const userID = req.user.id;
 
         const [checkUser] = await db.query("SELECT  id, username, email, phone, address, township, region,nrc FROM shareholders WHERE id = ?", [userID]);
         res.status(200).json({
