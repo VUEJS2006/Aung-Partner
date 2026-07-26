@@ -2,7 +2,7 @@ import express from "express";
 import "dotenv/config";
 import cookieParser from "cookie-parser";
 import db from "./config/db.js";
-
+import cors from "cors"
 import authRouter from "./routes/authRouters.js";
 import memberRouter from "./routes/memberRouters.js";
 import adminContactRouter from "./routes/adminContactRouters.js";
@@ -11,6 +11,7 @@ import transactionRouter from "./routes/transactionsRouter.js";
 import conditionRouter from "./routes/conditionRouter.js";
 import passcodeRouter from "./routes/passcodeRouters.js"
 import withdrawRouter from "./routes/withdrawRouter.js"
+
 const app = express();
 
 try {
@@ -25,7 +26,7 @@ const PORT = process.env.PORT || 5000;
 
 app.use(express.json());
 app.use(cookieParser());
-
+app.use(cors())
 app.use('/auth', authRouter);
 app.use('/api', memberRouter);
 app.use('/api', adminContactRouter);
