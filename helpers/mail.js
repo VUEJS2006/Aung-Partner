@@ -14,7 +14,7 @@ const transporter = nodemailer.createTransport({
 
 export const sendOTP = async (email, otp) => {
     await transporter.sendMail({
-        from: `"Bagan 360" <${process.env.EMAIL}>`,
+        from: `"Aung Partner" <${process.env.EMAIL}>`,
         to: email,
         subject: "Your OTP Code",
         html: `
@@ -23,7 +23,7 @@ export const sendOTP = async (email, otp) => {
                 
                 <!-- Header -->
                 <div style="background:#5a3825; color:white; padding:20px; text-align:center;">
-                    <h2 style="margin:0;">Bagan 360</h2>
+                    <h2 style="margin:0;">Aung Partner</h2>
                 </div>
 
                 <!-- Body -->
@@ -52,7 +52,7 @@ export const sendOTP = async (email, otp) => {
 
                 <!-- Footer -->
                 <div style="background:#f5f1eb; padding:10px; text-align:center; font-size:12px; color:#777;">
-                    © ${new Date().getFullYear()} Bagan 360
+                    © ${new Date().getFullYear()} Aung partner
                 </div>
 
             </div>
@@ -63,7 +63,7 @@ export const sendOTP = async (email, otp) => {
 
 export const sendMail = async (email, subject, message) => {
     await transporter.sendMail({
-        from: `"Bagan 360" <${process.env.EMAIL}>`,
+        from: `"Aung partner" <${process.env.EMAIL}>`,
         to: email,
         subject,
         html: `
@@ -71,7 +71,7 @@ export const sendMail = async (email, subject, message) => {
             <div style="max-width:420px; margin:auto; background:#ffffff; border-radius:10px; text-align:center; box-shadow:0 4px 10px rgba(0,0,0,0.1); overflow:hidden;">
                 
                 <div style="background:#5a3825; color:white; padding:15px;">
-                    <h3 style="margin:0;">Bagan 360</h3>
+                    <h3 style="margin:0;">Aung partner</h3>
                 </div>
 
                 <div style="padding:30px;">
