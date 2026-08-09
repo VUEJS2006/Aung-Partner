@@ -251,7 +251,7 @@ export const approvedUser = asyncHandel(async (req, res) => {
 
         const [checkUser] = await db.query(
             "SELECT * FROM shareholders WHERE id = ?",
-            [userId]
+            [userId]    
         );
 
         if (checkUser.length === 0) {
