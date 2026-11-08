@@ -567,12 +567,7 @@ export const AdminChangePassword = asyncHandel(async (req, res) => {
             message: "Password Change Success!",
             success: true
         })
-        if (data.affectedRows === 0) {
-            return res.status(404).json({
-                success: false,
-                message: "Shareholder Not Found!"
-            });
-        }
+
 
     } catch (err) {
         console.log(err)
