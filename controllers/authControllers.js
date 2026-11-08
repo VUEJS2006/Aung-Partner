@@ -2,7 +2,7 @@ import db from "../config/db.js";
 import bcrypt from "bcryptjs";
 import { json } from "express";
 import jwt from "jsonwebtoken";
-import { generateOTP, sendOTP, sendMail } from "../helpers/mail.js"
+import { sendMail } from "../helpers/mail.js"
 import { asyncHandel } from "../middleware/asyncMiddleware.js";
 import fs from "fs"
 import path from "path"
@@ -12,7 +12,7 @@ import sharp from "sharp";
 export const register = asyncHandel(async (req, res) => {
     try {
 
-        const { username, email, password, nrc, township, region, phone, address, birthday, role, status } = req.body;
+        const { username, email, password, nrc, township, region, phone, address, birthday } = req.body;
         // const image = req.file ? req.file.filename : null
 
         if (!username || !email || !password) {
@@ -31,35 +31,33 @@ export const register = asyncHandel(async (req, res) => {
             })
         }
 
-        const otp = generateOTP()
-
-
-        await db.query("DELETE FROM otp_codes WHERE email=?", [email]);
-        await db.query("INSERT INTO otp_codes (email,otp,expires_at) VALUES  (?, ?, DATE_ADD(NOW(), INTERVAL 10 MINUTE))", [email, otp]);
-        await sendOTP(email, otp);
-
-        const tempToken = jwt.sign(
-            {
+        const hashedPassword = await bcrypt.hash(password, 12);
+        await db.query(
+            "INSERT INTO shareholders (username,email,password,nrc,phone,address,region,township,birthday,role,status) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+            [
                 username,
                 email,
-                password,
+                hashedPassword,
                 nrc,
                 phone,
                 address,
                 region,
                 township,
-                birthday
-            },
-            process.env.JWT_SECRET,
-            { expiresIn: "15m" }
+                birthday,
+                "user",
+                "pending"
+            ]
         );
 
+        await sendMail(
+            email,
+            "Account Pending",
+            `<h3>Hello your account is pending!!</h3>`
+        );
 
-
-        res.status(200).json({
-            message: "OTP sent successfully",
+        res.status(201).json({
+            message: "Register success, waiting admin approval",
             success: true,
-            token: tempToken,
         });
 
 
@@ -70,63 +68,6 @@ export const register = asyncHandel(async (req, res) => {
             success: false
         })
     }
-})
-
-export const verifyOTP = asyncHandel(async (req, res) => {
-    const { email, otp, token } = req.body;
-
-
-    const [check] = await db.query("SELECT * FROM otp_codes WHERE email = ? AND otp = ? AND expires_at > NOW()", [email, otp]);
-
-    if (check.length === 0) {
-        return res.status(400).json({
-            message: "Invalid or expired OTP",
-            success: false
-        });
-    }
-
-    let user;
-    try {
-        user = jwt.verify(token, process.env.JWT_SECRET);
-    } catch (err) {
-        return res.status(400).json({
-            message: "Token expired"
-        });
-    }
-
-    const hashedPassword = await bcrypt.hash(user.password, 12);
-
-
-    const [data] = await db.query("INSERT INTO shareholders (username,email,password,nrc,phone,address,region,township,birthday,role,status) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
-        [
-            user.username,
-            user.email,
-            hashedPassword,
-            user.nrc,
-            user.phone,
-            user.address,
-            user.region,
-            user.township,
-            user.birthday,
-            "user",
-            "pending"
-        ]
-    );
-
-    await db.query("DELETE FROM otp_codes WHERE email=?", [email]);
-
-    await sendMail(
-        email,
-        "Account Pending",
-        `<h3>Hello your account is pending!!</h3>`
-
-    );
-    res.status(201).json({
-        message: "Register success, waiting admin approval",
-        success: true,
-
-    });
-
 })
 
 export const login = asyncHandel(async (req, res) => {
@@ -164,10 +105,13 @@ export const login = asyncHandel(async (req, res) => {
         if (!isMatch) {
             return res.status(401).json({ message: "Password does not match" });
         }
-        if (user.status === 'pending') {
-            return res.status(403).json({ message: 'pending', success: false });
-        } else if (user.status === 'cancel') {
-            return res.status(403).json({ message: 'cancel', success: false });
+        if (user.status !== 'approved') {
+            const message = user.status === 'pending'
+                ? 'pending'
+                : user.status === 'cancel'
+                    ? 'cancel'
+                    : 'Account is not approved';
+            return res.status(403).json({ message, success: false });
         }
 
         const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, process.env.JWT_SECRET, {
@@ -251,7 +195,7 @@ export const approvedUser = asyncHandel(async (req, res) => {
 
         const [checkUser] = await db.query(
             "SELECT * FROM shareholders WHERE id = ?",
-            [userId]    
+            [userId]
         );
 
         if (checkUser.length === 0) {

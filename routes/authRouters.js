@@ -1,12 +1,11 @@
 import express from "express";
-import { UserDelete, AdminChangePassword, AdminProfileUpdate, verifyOTP, AccountDelete, ChangePassword, registerList, register, login, logout, pendingUser, approvedUser, cancelledUser, pendingCheckUser, getProfile, updateProfile } from "../controllers/authControllers.js"
+import { UserDelete, AdminChangePassword, AdminProfileUpdate, AccountDelete, ChangePassword, registerList, register, login, logout, pendingUser, approvedUser, cancelledUser, pendingCheckUser, getProfile, updateProfile } from "../controllers/authControllers.js"
 import { validateRegister, isAdmin, isAuth } from "../middleware/authMiddleware.js";
 import { upload } from "../middleware/upload.js";
 import { verifyPasscode } from "../middleware/passcodeMiddleware.js";
 const router = express.Router();
 
 router.post('/register', validateRegister, register);
-router.post('/verify/otp', verifyOTP);
 router.post('/login', login);
 router.get('/register/list', registerList);
 router.post('/logout', logout);
